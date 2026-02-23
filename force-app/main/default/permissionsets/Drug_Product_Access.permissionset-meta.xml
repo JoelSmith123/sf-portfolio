@@ -14,11 +14,6 @@
     </objectPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Drug_Product__c.Product_Name__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
         <field>Drug_Product__c.Generic_Name__c</field>
         <readable>true</readable>
     </fieldPermissions>
