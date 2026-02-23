@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Dosage_Form__c</fullName>
+    <description>Physical form of the drug product for administration</description>
+    <externalId>false</externalId>
+    <label>Dosage Form</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Tablet</fullName>
+                <default>false</default>
+                <label>Tablet</label>
+            </value>
+            <value>
+                <fullName>Capsule</fullName>
+                <default>false</default>
+                <label>Capsule</label>
+            </value>
+            <value>
+                <fullName>Injectable</fullName>
+                <default>false</default>
+                <label>Injectable</label>
+            </value>
+            <value>
+                <fullName>Infusion</fullName>
+                <default>false</default>
+                <label>Infusion</label>
+            </value>
+            <value>
+                <fullName>Topical</fullName>
+                <default>false</default>
+                <label>Topical</label>
+            </value>
+            <value>
+                <fullName>Oral Solution</fullName>
+                <default>false</default>
+                <label>Oral Solution</label>
+            </value>
+            <value>
+                <fullName>Patch</fullName>
+                <default>false</default>
+                <label>Patch</label>
+            </value>
+            <value>
+                <fullName>Inhaler</fullName>
+                <default>false</default>
+                <label>Inhaler</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

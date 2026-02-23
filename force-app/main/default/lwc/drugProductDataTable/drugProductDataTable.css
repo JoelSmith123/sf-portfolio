@@ -1,0 +1,9 @@
+:host {
+    display: block;
+}
+
+.record-count {
+    font-size: 0.75rem;
+    color: #706e6b;
+    font-style: italic;
+}

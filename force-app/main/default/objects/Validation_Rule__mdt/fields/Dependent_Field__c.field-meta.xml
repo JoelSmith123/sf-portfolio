@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Dependent_Field__c</fullName>
+    <label>Dependent Field</label>
+    <description>Optional. API name of a prerequisite field that must match Dependent_Value__c for this rule to fire. Enables conditional rules like "when Regulatory_Status is Approved, then FDA_Approval_Date must not be blank."</description>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <unique>false</unique>
+    <externalId>false</externalId>
+</CustomField>
