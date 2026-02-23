@@ -4,10 +4,9 @@
     <description>Active pharmaceutical ingredients in the drug formulation</description>
     <externalId>false</externalId>
     <label>Active Ingredients</label>
-    <length>500</length>
-    <required>false</required>
+    <length>5000</length>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
-    <type>Text</type>
-    <unique>false</unique>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
 </CustomField>

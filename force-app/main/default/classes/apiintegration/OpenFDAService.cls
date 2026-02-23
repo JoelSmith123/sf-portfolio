@@ -217,7 +217,7 @@ public with sharing class OpenFDAService {
             product.Manufacturer__c = truncate(fdaData.manufacturerName, 255);
         }
         if (String.isNotBlank(fdaData.activeIngredients)) {
-            product.Active_Ingredients__c = truncate(fdaData.activeIngredients, 500);
+            product.Active_Ingredients__c = truncate(fdaData.activeIngredients, 5000);
         }
         if (String.isNotBlank(fdaData.indicationsAndUsage)) {
             product.Indications__c = truncate(fdaData.indicationsAndUsage, 10000);

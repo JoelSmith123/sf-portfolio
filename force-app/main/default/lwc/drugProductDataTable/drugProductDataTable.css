@@ -3,7 +3,7 @@
 }
 
 .record-count {
-    font-size: var(--lwc-fontSize2, 0.75rem);
-    color: var(--lwc-colorTextWeak, #706e6b);
+    font-size: 0.75rem;
+    color: #706e6b;
     font-style: italic;
 }
