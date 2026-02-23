@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Object_Name__c</fullName>
+    <label>Object Name</label>
+    <description>API name of the SObject this rule applies to (e.g., Drug_Product__c).</description>
+    <type>Text</type>
+    <length>100</length>
+    <required>true</required>
+    <unique>false</unique>
+    <externalId>false</externalId>
+</CustomField>
