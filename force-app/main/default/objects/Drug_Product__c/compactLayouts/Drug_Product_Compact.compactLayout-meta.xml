@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompactLayout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Drug_Product_Compact</fullName>
+    <fields>Product_Name__c</fields>
+    <fields>Generic_Name__c</fields>
+    <fields>Regulatory_Status__c</fields>
+    <fields>Therapeutic_Area__c</fields>
+    <fields>Manufacturer__c</fields>
+    <label>Drug Product Compact Layout</label>
+</CompactLayout>
