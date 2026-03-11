@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Override_Message__c</fullName>
+    <description>Custom error or warning message to display instead of the default rule message. Only used when Override Action is Override Message.</description>
+    <externalId>false</externalId>
+    <label>Override Message</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <length>500</length>
+    <visibleLines>3</visibleLines>
+</CustomField>

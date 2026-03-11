@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Override_Action__c</fullName>
+    <description>How this override modifies the rule: Suppress skips the rule entirely, Override_Message runs the rule with a custom error message, Downgrade_To_Warning fires the rule as a UI-only warning without blocking save.</description>
+    <externalId>false</externalId>
+    <label>Override Action</label>
+    <required>true</required>
+    <trackHistory>true</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Suppress</fullName>
+                <default>false</default>
+                <label>Suppress</label>
+            </value>
+            <value>
+                <fullName>Override_Message</fullName>
+                <default>false</default>
+                <label>Override Message</label>
+            </value>
+            <value>
+                <fullName>Downgrade_To_Warning</fullName>
+                <default>false</default>
+                <label>Downgrade to Warning</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
