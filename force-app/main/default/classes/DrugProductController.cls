@@ -51,7 +51,7 @@ public with sharing class DrugProductController {
      * @param searchTerm Optional text filter (same LIKE search as getDrugProducts).
      * @return List of DrugProductValidationWrapper with record + validation status.
      */
-    @AuraEnabled(cacheable=false)
+    @AuraEnabled(cacheable=true)
     public static List<DrugProductValidationWrapper> getDrugProductsWithValidation(String searchTerm) {
         List<Drug_Product__c> records;
         if (String.isNotBlank(searchTerm)) {
