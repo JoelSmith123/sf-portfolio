@@ -1,0 +1,29 @@
+:host {
+    display: block;
+}
+
+/* ── Info banner ─────────────────────────────────────────────────── */
+.info-banner {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
+    background-color: #fff8ed;
+    border: 1px solid #f3a312;
+    border-left: 4px solid #f3a312;
+    border-radius: 0.25rem;
+    font-size: 0.8125rem;
+    color: #3e3e3c;
+    line-height: 1.5;
+}
+
+.banner-icon {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+/* ── Rule count badge ────────────────────────────────────────────── */
+.badge-count {
+    font-size: 0.75rem;
+    font-weight: 400;
+    vertical-align: middle;
+}

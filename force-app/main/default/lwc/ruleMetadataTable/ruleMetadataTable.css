@@ -1,0 +1,48 @@
+:host {
+    display: block;
+}
+
+/* Horizontal scroll on small viewports */
+.table-scroll {
+    overflow-x: auto;
+}
+
+/* Column widths */
+.col-rule      { width: 18%; }
+.col-field     { width: 12%; }
+.col-op        { width: 10%; }
+.col-value     { width: 10%; }
+.col-message   { width: 24%; }
+.col-condition { width: 18%; }
+.col-active    { width: 8%;  text-align: center; }
+
+.rule-name {
+    font-weight: 500;
+    font-size: 0.8125rem;
+}
+
+.rule-dev-name {
+    font-size: 0.75rem;
+}
+
+/* Pill-style operator badge */
+.operator-badge {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    background-color: #e8e8e8;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    font-family: monospace;
+    white-space: nowrap;
+}
+
+.msg-cell {
+    font-size: 0.8125rem;
+    white-space: normal;
+    max-width: 20rem;
+}
+
+.condition-cell {
+    font-size: 0.8125rem;
+    font-family: monospace;
+}

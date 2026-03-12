@@ -1,0 +1,61 @@
+<template>
+    <!-- Empty state -->
+    <template if:false={hasRules}>
+        <p class="slds-text-body_small slds-text-color_weak">
+            No validation rules found for Drug_Product__c.
+        </p>
+    </template>
+
+    <!-- Rules table -->
+    <template if:true={hasRules}>
+        <div class="table-scroll">
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-table_fixed-layout">
+                <thead>
+                    <tr class="slds-line-height_reset">
+                        <th scope="col" class="slds-text-title_caps col-rule">Rule</th>
+                        <th scope="col" class="slds-text-title_caps col-field">Field</th>
+                        <th scope="col" class="slds-text-title_caps col-op">Operator</th>
+                        <th scope="col" class="slds-text-title_caps col-value">Value</th>
+                        <th scope="col" class="slds-text-title_caps col-message">Error Message</th>
+                        <th scope="col" class="slds-text-title_caps col-condition">Condition</th>
+                        <th scope="col" class="slds-text-title_caps col-active">Active</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={processedRules} for:item="rule">
+                        <tr key={rule.key} class="slds-hint-parent">
+                            <td data-label="Rule">
+                                <span class="rule-name" title={rule.key}>{rule.label}</span>
+                                <span class="rule-dev-name slds-text-color_weak"> ({rule.key})</span>
+                            </td>
+                            <td data-label="Field" class="slds-truncate">{rule.fieldName}</td>
+                            <td data-label="Operator">
+                                <span class="operator-badge">{rule.operator}</span>
+                            </td>
+                            <td data-label="Value" class="slds-truncate">{rule.value}</td>
+                            <td data-label="Error Message" class="msg-cell">{rule.errorMessage}</td>
+                            <td data-label="Condition" class="slds-truncate condition-cell">{rule.condition}</td>
+                            <td data-label="Active" class="slds-text-align_center">
+                                <template if:true={rule.isActive}>
+                                    <lightning-icon
+                                        icon-name="utility:check"
+                                        size="xx-small"
+                                        variant="success"
+                                        alternative-text="Active">
+                                    </lightning-icon>
+                                </template>
+                                <template if:false={rule.isActive}>
+                                    <lightning-icon
+                                        icon-name="utility:close"
+                                        size="xx-small"
+                                        alternative-text="Inactive">
+                                    </lightning-icon>
+                                </template>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </template>
+</template>
