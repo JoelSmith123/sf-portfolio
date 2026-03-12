@@ -1,0 +1,783 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Flow: New_Drug_Product_Wizard (Screen Flow)
+  Type: Flow (manual launch — add to a Quick Action or utility bar)
+
+  Execution path (connected via <connector> references):
+    START
+      → Screen_BasicInfo         (Step 1: Product Name, Generic Name, Therapeutic Area, Classification)
+      → Action_SearchFDA         (invocable: search OpenFDA by brand name — exceptions swallowed)
+      → Decision_FDAFound
+            [found] → Screen_FDAPreview     (Step 2: review FDA data, tick acceptance checkboxes)
+                    → Screen_RegulatoryDetails
+          [default] → Screen_RegulatoryDetails
+      → Screen_RegulatoryDetails (Step 3: Status, Dates, Orphan Drug, Manufacturer, NDC, Ingredients;
+                                   manufacturer/NDC/ingredients pre-filled via formula if accepted)
+      → Screen_Review            (Step 4: confirm all values before committing)
+      → Action_CreateRecord      (invocable: DrugProductFlowController — catches DML errors)
+      → Decision_CreateSuccess
+            [success] → Screen_Success (terminal)
+            [default] → Screen_Error   (terminal, Back allowed for retry)
+
+  Key pattern: standard screen fields (InputField, DropdownBox, Boolean) do NOT use
+  <outputParameters>. Their values are automatically accessible via {!FieldName} in
+  subsequent elements. Only Apex action outputs need explicit <outputParameters>.
+-->
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <description>Multi-step screen flow for creating a new Drug_Product__c record. Guides the user through basic info, an optional FDA data preview (DrugProductFDAFlowAction), regulatory details with FDA pre-filled defaults, and a review screen before committing via DrugProductFlowController. Demonstrates invocable Apex integration, conditional screen navigation, and formula-driven field defaults within a guided UI flow.</description>
+    <interviewLabel>New Drug Product Wizard {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>New Drug Product Wizard</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Screen_BasicInfo</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         APEX ACTIONS (grouped, alpha by name)
+         ───────────────────────────────────────────────────────────── -->
+
+    <!-- Create the Drug Product record via invocable Apex -->
+    <actionCalls>
+        <name>Action_CreateRecord</name>
+        <label>Create Drug Product Record</label>
+        <locationX>176</locationX>
+        <locationY>854</locationY>
+        <actionName>DrugProductFlowController</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Decision_CreateSuccess</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Screen_Error</targetReference>
+        </faultConnector>
+        <!-- Screen field values are referenced directly by field name -->
+        <inputParameters>
+            <name>productName</name>
+            <value><elementReference>Field_ProductName</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>genericName</name>
+            <value><elementReference>Field_GenericName</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>therapeuticArea</name>
+            <value><elementReference>Field_TherapeuticArea</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>drugClassification</name>
+            <value><elementReference>Field_DrugClassification</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>regulatoryStatus</name>
+            <value><elementReference>Field_RegulatoryStatus</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>fdaApprovalDate</name>
+            <value><elementReference>Field_FDAApprovalDate</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>launchDate</name>
+            <value><elementReference>Field_LaunchDate</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>orphanDrugStatus</name>
+            <value><elementReference>Field_OrphanDrug</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>manufacturer</name>
+            <value><elementReference>Field_Manufacturer</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>ndcCode</name>
+            <value><elementReference>Field_NDCCode</elementReference></value>
+        </inputParameters>
+        <inputParameters>
+            <name>activeIngredients</name>
+            <value><elementReference>Field_ActiveIngredients</elementReference></value>
+        </inputParameters>
+        <outputParameters>
+            <assignToReference>varCreatedRecordId</assignToReference>
+            <name>recordId</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>varCreateSuccess</assignToReference>
+            <name>success</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>varCreateErrorMessage</assignToReference>
+            <name>errorMessage</name>
+        </outputParameters>
+    </actionCalls>
+
+    <!-- Search OpenFDA by brand name; exceptions are swallowed in Apex -->
+    <actionCalls>
+        <name>Action_SearchFDA</name>
+        <label>Search FDA for Drug Product</label>
+        <locationX>176</locationX>
+        <locationY>254</locationY>
+        <actionName>DrugProductFDAFlowAction</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>Decision_FDAFound</targetReference>
+        </connector>
+        <inputParameters>
+            <name>productName</name>
+            <value>
+                <elementReference>Field_ProductName</elementReference>
+            </value>
+        </inputParameters>
+        <outputParameters>
+            <assignToReference>varFDAFound</assignToReference>
+            <name>found</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>varFDAManufacturer</assignToReference>
+            <name>manufacturer</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>varFDANDCCode</assignToReference>
+            <name>ndcCode</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>varFDAActiveIngredients</assignToReference>
+            <name>activeIngredients</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>varFDAIndicationsAndUsage</assignToReference>
+            <name>indicationsAndUsage</name>
+        </outputParameters>
+        <outputParameters>
+            <assignToReference>varFDAWarnings</assignToReference>
+            <name>warnings</name>
+        </outputParameters>
+    </actionCalls>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         CHOICES — Therapeutic Area (alpha by name)
+         ───────────────────────────────────────────────────────────── -->
+    <choices>
+        <name>tArea_Cardiovascular</name>
+        <choiceText>Cardiovascular</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Cardiovascular</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_Dermatology</name>
+        <choiceText>Dermatology</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Dermatology</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_Endocrinology</name>
+        <choiceText>Endocrinology</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Endocrinology</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_Gastroenterology</name>
+        <choiceText>Gastroenterology</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Gastroenterology</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_Immunology</name>
+        <choiceText>Immunology</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Immunology</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_InfectiousDisease</name>
+        <choiceText>Infectious Disease</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Infectious Disease</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_Neurology</name>
+        <choiceText>Neurology</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Neurology</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_Oncology</name>
+        <choiceText>Oncology</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Oncology</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_RareDisease</name>
+        <choiceText>Rare Disease</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Rare Disease</stringValue></value>
+    </choices>
+    <choices>
+        <name>tArea_Respiratory</name>
+        <choiceText>Respiratory</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Respiratory</stringValue></value>
+    </choices>
+    <!-- Drug Classification -->
+    <choices>
+        <name>dClass_ControlledSubstance</name>
+        <choiceText>Controlled Substance</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Controlled Substance</stringValue></value>
+    </choices>
+    <choices>
+        <name>dClass_OTC</name>
+        <choiceText>OTC</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>OTC</stringValue></value>
+    </choices>
+    <choices>
+        <name>dClass_Rx</name>
+        <choiceText>Rx</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Rx</stringValue></value>
+    </choices>
+    <!-- Regulatory Status -->
+    <choices>
+        <name>rStatus_Approved</name>
+        <choiceText>Approved</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Approved</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_Discontinued</name>
+        <choiceText>Discontinued</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Discontinued</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_INDPending</name>
+        <choiceText>IND Pending</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>IND Pending</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_InDiscovery</name>
+        <choiceText>In Discovery</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>In Discovery</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_Launched</name>
+        <choiceText>Launched</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Launched</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_NDASubmitted</name>
+        <choiceText>NDA Submitted</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>NDA Submitted</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_Phase1</name>
+        <choiceText>Phase 1</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Phase 1</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_Phase2</name>
+        <choiceText>Phase 2</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Phase 2</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_Phase3</name>
+        <choiceText>Phase 3</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Phase 3</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_PostMarketing</name>
+        <choiceText>Post-Marketing</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Post-Marketing</stringValue></value>
+    </choices>
+    <choices>
+        <name>rStatus_UnderFDAReview</name>
+        <choiceText>Under FDA Review</choiceText>
+        <dataType>String</dataType>
+        <value><stringValue>Under FDA Review</stringValue></value>
+    </choices>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         DECISIONS (grouped, alpha by name)
+         ───────────────────────────────────────────────────────────── -->
+    <decisions>
+        <name>Decision_CreateSuccess</name>
+        <label>Record Created Successfully?</label>
+        <locationX>176</locationX>
+        <locationY>974</locationY>
+        <defaultConnector>
+            <targetReference>Screen_Error</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Creation failed</defaultConnectorLabel>
+        <rules>
+            <name>Outcome_CreateSuccess</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varCreateSuccess</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Screen_Success</targetReference>
+            </connector>
+            <label>Record created</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_FDAFound</name>
+        <label>FDA Data Found?</label>
+        <locationX>176</locationX>
+        <locationY>374</locationY>
+        <defaultConnector>
+            <targetReference>Screen_RegulatoryDetails</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No FDA data — skip preview</defaultConnectorLabel>
+        <rules>
+            <name>Outcome_FDAFound</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>varFDAFound</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Screen_FDAPreview</targetReference>
+            </connector>
+            <label>FDA data found</label>
+        </rules>
+    </decisions>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         FORMULAS — default values for pre-filled screen fields
+         Evaluates acceptance checkboxes (set on Screen_FDAPreview);
+         returns FDA value if accepted, else empty string.
+         ───────────────────────────────────────────────────────────── -->
+    <formulas>
+        <name>formDefaultActiveIngredients</name>
+        <dataType>String</dataType>
+        <expression>IF({!Checkbox_AcceptActiveIngredients}, {!varFDAActiveIngredients}, "")</expression>
+    </formulas>
+    <formulas>
+        <name>formDefaultManufacturer</name>
+        <dataType>String</dataType>
+        <expression>IF({!Checkbox_AcceptManufacturer}, {!varFDAManufacturer}, "")</expression>
+    </formulas>
+    <formulas>
+        <name>formDefaultNDCCode</name>
+        <dataType>String</dataType>
+        <expression>IF({!Checkbox_AcceptNDC}, {!varFDANDCCode}, "")</expression>
+    </formulas>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         SCREENS (all grouped, in logical execution order)
+         Note: standard screen fields do NOT use <outputParameters>.
+         Their values are accessible via {!FieldName} in subsequent
+         flow elements after the screen is completed.
+         ───────────────────────────────────────────────────────────── -->
+
+    <!-- Screen 1: Basic Information -->
+    <screens>
+        <name>Screen_BasicInfo</name>
+        <label>Basic Information</label>
+        <locationX>176</locationX>
+        <locationY>134</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Action_SearchFDA</targetReference>
+        </connector>
+        <fields>
+            <name>Field_ProductName</name>
+            <dataType>String</dataType>
+            <fieldText>Product Name</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>true</isRequired>
+        </fields>
+        <fields>
+            <name>Field_GenericName</name>
+            <dataType>String</dataType>
+            <fieldText>Generic Name</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Field_TherapeuticArea</name>
+            <choiceReferences>tArea_Oncology</choiceReferences>
+            <choiceReferences>tArea_Cardiovascular</choiceReferences>
+            <choiceReferences>tArea_InfectiousDisease</choiceReferences>
+            <choiceReferences>tArea_Immunology</choiceReferences>
+            <choiceReferences>tArea_Neurology</choiceReferences>
+            <choiceReferences>tArea_Endocrinology</choiceReferences>
+            <choiceReferences>tArea_Respiratory</choiceReferences>
+            <choiceReferences>tArea_Dermatology</choiceReferences>
+            <choiceReferences>tArea_Gastroenterology</choiceReferences>
+            <choiceReferences>tArea_RareDisease</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Therapeutic Area</fieldText>
+            <fieldType>DropdownBox</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Field_DrugClassification</name>
+            <choiceReferences>dClass_Rx</choiceReferences>
+            <choiceReferences>dClass_OTC</choiceReferences>
+            <choiceReferences>dClass_ControlledSubstance</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Drug Classification</fieldText>
+            <fieldType>DropdownBox</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <!-- Screen 2 (conditional): FDA Data Preview -->
+    <screens>
+        <name>Screen_FDAPreview</name>
+        <label>FDA Data Preview</label>
+        <locationX>50</locationX>
+        <locationY>494</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Screen_RegulatoryDetails</targetReference>
+        </connector>
+        <fields>
+            <name>Display_FDAHeader</name>
+            <fieldText>FDA data found for &lt;b&gt;{!Field_ProductName}&lt;/b&gt;. Select the fields below to pre-fill from FDA records. You can review and edit all values on the next screen.</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Display_FDAManufacturer</name>
+            <fieldText>Manufacturer: {!varFDAManufacturer}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Checkbox_AcceptManufacturer</name>
+            <dataType>Boolean</dataType>
+            <defaultValue>
+                <booleanValue>false</booleanValue>
+            </defaultValue>
+            <fieldText>Accept Manufacturer from FDA</fieldText>
+            <fieldType>InputField</fieldType>
+        </fields>
+        <fields>
+            <name>Display_FDANDCCode</name>
+            <fieldText>NDC Code: {!varFDANDCCode}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Checkbox_AcceptNDC</name>
+            <dataType>Boolean</dataType>
+            <defaultValue>
+                <booleanValue>false</booleanValue>
+            </defaultValue>
+            <fieldText>Accept NDC Code from FDA</fieldText>
+            <fieldType>InputField</fieldType>
+        </fields>
+        <fields>
+            <name>Display_FDAActiveIngredients</name>
+            <fieldText>Active Ingredients: {!varFDAActiveIngredients}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Checkbox_AcceptActiveIngredients</name>
+            <dataType>Boolean</dataType>
+            <defaultValue>
+                <booleanValue>false</booleanValue>
+            </defaultValue>
+            <fieldText>Accept Active Ingredients from FDA</fieldText>
+            <fieldType>InputField</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <!-- Screen 3: Regulatory Details
+         Manufacturer/NDC/Ingredients default from FDA formulas if accepted;
+         user may edit any value before proceeding. -->
+    <screens>
+        <name>Screen_RegulatoryDetails</name>
+        <label>Regulatory Details</label>
+        <locationX>176</locationX>
+        <locationY>614</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Screen_Review</targetReference>
+        </connector>
+        <fields>
+            <name>Field_RegulatoryStatus</name>
+            <choiceReferences>rStatus_InDiscovery</choiceReferences>
+            <choiceReferences>rStatus_INDPending</choiceReferences>
+            <choiceReferences>rStatus_Phase1</choiceReferences>
+            <choiceReferences>rStatus_Phase2</choiceReferences>
+            <choiceReferences>rStatus_Phase3</choiceReferences>
+            <choiceReferences>rStatus_NDASubmitted</choiceReferences>
+            <choiceReferences>rStatus_UnderFDAReview</choiceReferences>
+            <choiceReferences>rStatus_Approved</choiceReferences>
+            <choiceReferences>rStatus_Launched</choiceReferences>
+            <choiceReferences>rStatus_PostMarketing</choiceReferences>
+            <choiceReferences>rStatus_Discontinued</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Regulatory Status</fieldText>
+            <fieldType>DropdownBox</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Field_FDAApprovalDate</name>
+            <dataType>Date</dataType>
+            <fieldText>FDA Approval Date</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Field_LaunchDate</name>
+            <dataType>Date</dataType>
+            <fieldText>Launch Date</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Field_OrphanDrug</name>
+            <dataType>Boolean</dataType>
+            <defaultValue>
+                <booleanValue>false</booleanValue>
+            </defaultValue>
+            <fieldText>Orphan Drug Status</fieldText>
+            <fieldType>InputField</fieldType>
+        </fields>
+        <fields>
+            <name>Field_Manufacturer</name>
+            <dataType>String</dataType>
+            <defaultValue>
+                <elementReference>formDefaultManufacturer</elementReference>
+            </defaultValue>
+            <fieldText>Manufacturer</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Field_NDCCode</name>
+            <dataType>String</dataType>
+            <defaultValue>
+                <elementReference>formDefaultNDCCode</elementReference>
+            </defaultValue>
+            <fieldText>NDC Code</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Field_ActiveIngredients</name>
+            <dataType>String</dataType>
+            <defaultValue>
+                <elementReference>formDefaultActiveIngredients</elementReference>
+            </defaultValue>
+            <fieldText>Active Ingredients</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <!-- Screen 4: Review and Confirm -->
+    <screens>
+        <name>Screen_Review</name>
+        <label>Review and Confirm</label>
+        <locationX>176</locationX>
+        <locationY>734</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>false</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Action_CreateRecord</targetReference>
+        </connector>
+        <fields>
+            <name>Display_ReviewIntro</name>
+            <fieldText>Please review the information below before creating the drug product record.</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Display_ReviewProductName</name>
+            <fieldText>&lt;b&gt;Product Name:&lt;/b&gt; {!Field_ProductName}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Display_ReviewGenericName</name>
+            <fieldText>&lt;b&gt;Generic Name:&lt;/b&gt; {!Field_GenericName}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Display_ReviewTherapeuticArea</name>
+            <fieldText>&lt;b&gt;Therapeutic Area:&lt;/b&gt; {!Field_TherapeuticArea}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Display_ReviewDrugClassification</name>
+            <fieldText>&lt;b&gt;Drug Classification:&lt;/b&gt; {!Field_DrugClassification}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Display_ReviewRegulatoryStatus</name>
+            <fieldText>&lt;b&gt;Regulatory Status:&lt;/b&gt; {!Field_RegulatoryStatus}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Display_ReviewManufacturer</name>
+            <fieldText>&lt;b&gt;Manufacturer:&lt;/b&gt; {!Field_Manufacturer}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Display_ReviewNDCCode</name>
+            <fieldText>&lt;b&gt;NDC Code:&lt;/b&gt; {!Field_NDCCode}</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <!-- Screen: Error (terminal, Back allows retry) -->
+    <screens>
+        <name>Screen_Error</name>
+        <label>Creation Error</label>
+        <locationX>50</locationX>
+        <locationY>1094</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Display_ErrorMessage</name>
+            <fieldText>&lt;p&gt;&lt;b&gt;An error occurred while creating the drug product.&lt;/b&gt;&lt;/p&gt;&lt;p&gt;{!varCreateErrorMessage}&lt;/p&gt;&lt;p&gt;Click Back to review your entries and try again.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <!-- Screen: Success (terminal) -->
+    <screens>
+        <name>Screen_Success</name>
+        <label>Drug Product Created</label>
+        <locationX>176</locationX>
+        <locationY>1094</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Display_SuccessMessage</name>
+            <fieldText>&lt;p&gt;&lt;b&gt;{!Field_ProductName}&lt;/b&gt; was created successfully.&lt;/p&gt;&lt;p&gt;Record ID: {!varCreatedRecordId}&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         VARIABLES — Apex action outputs only.
+         User input is captured via screen field names ({!FieldName}),
+         so no separate variables are needed for screen-entered data.
+         ───────────────────────────────────────────────────────────── -->
+    <variables>
+        <name>varCreateErrorMessage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>varCreateSuccess</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value><booleanValue>false</booleanValue></value>
+    </variables>
+    <variables>
+        <name>varCreatedRecordId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>varFDAActiveIngredients</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>varFDAFound</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value><booleanValue>false</booleanValue></value>
+    </variables>
+    <variables>
+        <name>varFDAIndicationsAndUsage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>varFDAManufacturer</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>varFDANDCCode</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>varFDAWarnings</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+
+</Flow>
