@@ -1,0 +1,31 @@
+<template>
+    <!-- Error / warning badges -->
+    <template if:true={hasErrors}>
+        <ul class="badge-list">
+            <template for:each={processedErrors} for:item="badge">
+                <li key={badge.key} class={badge.rowClass}>
+                    <lightning-icon
+                        icon-name={badge.iconName}
+                        size="xx-small"
+                        class="slds-var-m-right_xx-small badge-icon">
+                    </lightning-icon>
+                    <span class="badge-message">{badge.errorMessage}</span>
+                    <span class="badge-field"> ({badge.fieldName})</span>
+                </li>
+            </template>
+        </ul>
+    </template>
+
+    <!-- All-clear state -->
+    <template if:false={hasErrors}>
+        <div class="badge-pass">
+            <lightning-icon
+                icon-name="utility:success"
+                size="xx-small"
+                variant="success"
+                class="slds-var-m-right_xx-small">
+            </lightning-icon>
+            <span>All validation rules pass</span>
+        </div>
+    </template>
+</template>

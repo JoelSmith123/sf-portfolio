@@ -162,4 +162,78 @@ private class DrugProductControllerTest {
         }
         Test.stopTest();
     }
+
+    // ---------------------------------------------------------------------------
+    // getDrugProductsWithValidation tests
+    // ---------------------------------------------------------------------------
+
+    @IsTest
+    static void testGetDrugProductsWithValidation_NoSearch_ReturnsAllWithStatus() {
+        Test.startTest();
+        List<DrugProductValidationWrapper> wrappers =
+            DrugProductController.getDrugProductsWithValidation(null);
+        Test.stopTest();
+
+        System.assertEquals(3, wrappers.size(), 'Should return all 3 test records');
+        for (DrugProductValidationWrapper w : wrappers) {
+            System.assertNotEquals(null, w.record, 'Record should not be null');
+            System.assertNotEquals(null, w.validationStatus, 'Validation status should not be null');
+            System.assertNotEquals(null, w.validationErrors, 'Validation errors list should not be null');
+            System.assert(
+                w.validationStatus == 'valid'
+                    || w.validationStatus == 'warning'
+                    || w.validationStatus == 'invalid',
+                'Status should be one of: valid, warning, invalid'
+            );
+        }
+    }
+
+    @IsTest
+    static void testGetDrugProductsWithValidation_ValidRecord_ReturnsValidStatus() {
+        // TestDrug Alpha: Approved + has FDA date → should pass all rules
+        Test.startTest();
+        List<DrugProductValidationWrapper> wrappers =
+            DrugProductController.getDrugProductsWithValidation('Alpha');
+        Test.stopTest();
+
+        System.assertEquals(1, wrappers.size(), 'Should return one result for Alpha search');
+        System.assertEquals('valid', wrappers[0].validationStatus,
+            'Approved record with FDA date should have valid status');
+        System.assertEquals(0, wrappers[0].validationErrors.size(),
+            'Valid record should have no validation errors');
+    }
+
+    @IsTest
+    static void testGetDrugProductsWithValidation_BlankSearch_ReturnsAll() {
+        Test.startTest();
+        List<DrugProductValidationWrapper> wrappers =
+            DrugProductController.getDrugProductsWithValidation('  ');
+        Test.stopTest();
+
+        System.assertEquals(3, wrappers.size(), 'Blank search should return all records');
+    }
+
+    @IsTest
+    static void testGetDrugProductsWithValidation_NoResults_ReturnsEmptyList() {
+        Test.startTest();
+        List<DrugProductValidationWrapper> wrappers =
+            DrugProductController.getDrugProductsWithValidation('nonexistent12345');
+        Test.stopTest();
+
+        System.assertEquals(0, wrappers.size(), 'Should return empty list for no matches');
+    }
+
+    @IsTest
+    static void testGetDrugProductsWithValidation_Phase3RecordIncludesPatentField() {
+        Test.startTest();
+        List<DrugProductValidationWrapper> wrappers =
+            DrugProductController.getDrugProductsWithValidation('Gamma');
+        Test.stopTest();
+
+        System.assertEquals(1, wrappers.size(), 'Should find Gamma');
+        System.assertEquals('valid', wrappers[0].validationStatus,
+            'Phase 3 record should be valid (no conditional rules fire)');
+        System.assertNotEquals(null, wrappers[0].record.Patent_Expiry_Alert__c,
+            'Patent_Expiry_Alert__c field should be included in the queried record');
+    }
 }

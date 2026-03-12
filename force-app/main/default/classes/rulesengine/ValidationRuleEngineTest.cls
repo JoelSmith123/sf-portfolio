@@ -2,7 +2,8 @@
  * @description Test class for ValidationRuleEngine and DrugProductTrigger.
  *              Validates the data-driven rules engine by testing all three deployed
  *              validation rules through the trigger, plus direct engine evaluation,
- *              bulk operations, and edge cases. Target: 95%+ coverage.
+ *              bulk operations, edge cases, and Rule_Override__c behavior.
+ *              Target: 95%+ coverage.
  *
  *              Note: Custom metadata records (Validation_Rule__mdt) deployed to the org
  *              are automatically available in test context without SeeAllData=true.
@@ -263,6 +264,7 @@ private class ValidationRuleEngineTest {
         System.assertEquals('FDA_Approval_Date__c', vr.fieldName, 'Field name should match');
         System.assertEquals(false, vr.passed, 'Result should indicate failure');
         System.assert(vr.errorMessage.contains('FDA Approval Date'), 'Error message should match');
+        System.assertEquals(true, vr.isBlockingError, 'Default result should be blocking');
     }
 
     @IsTest
@@ -363,5 +365,305 @@ private class ValidationRuleEngineTest {
             'Unknown operators should pass by default'
         );
         Test.stopTest();
+    }
+
+    // ---------------------------------------------------------------------------
+    // Rule_Override__c: Suppress action
+    // ---------------------------------------------------------------------------
+
+    @IsTest
+    static void testOverride_Suppress_SkipsRule() {
+        // Create a Suppress override for the Approved_Requires_FDA_Date rule,
+        // targeting a permission set that the running test user will have.
+        // We use the current user's actual permission sets to avoid creating a new user.
+        // Instead, we directly test the engine's override map logic using the
+        // @TestVisible private helper methods.
+
+        // Build an override record for the current user's context.
+        // In test context, we can insert Rule_Override__c and query it.
+        // The engine uses getUserPermissionSetNames(), so we need to match one of those names.
+        // Easiest: pick a permission set name that the running user has, or use a mock approach.
+
+        // Since we can't easily guarantee which permission sets the test user has,
+        // we test via the @TestVisible cache injection pattern:
+        // Reset the cache and inject a known perm set name, then insert a matching override.
+        ValidationRuleEngine.cachedPermSetNames = new Set<String>{ 'Drug_Product_Admin' };
+
+        Rule_Override__c ruleOverride = new Rule_Override__c(
+            Validation_Rule_Name__c = 'Approved_Requires_FDA_Date',
+            Permission_Set_Name__c = 'Drug_Product_Admin',
+            Override_Action__c = 'Suppress',
+            Is_Active__c = true
+        );
+        insert ruleOverride;
+
+        Drug_Product__c product = new Drug_Product__c(
+            Product_Name__c = 'Suppressed Rule Test',
+            Regulatory_Status__c = 'Approved'
+            // No FDA date — rule would normally fire, but it's suppressed
+        );
+
+        Test.startTest();
+        Map<Integer, List<ValidationResult>> results =
+            ValidationRuleEngine.evaluate('Drug_Product__c', new List<SObject>{ product });
+        Test.stopTest();
+
+        // Reset cache after test
+        ValidationRuleEngine.cachedPermSetNames = null;
+
+        // Approved_Requires_FDA_Date should be suppressed; no results for that rule
+        Boolean fdaRuleFound = false;
+        if (results.containsKey(0)) {
+            for (ValidationResult vr : results.get(0)) {
+                if (vr.ruleName == 'Approved_Requires_FDA_Date') {
+                    fdaRuleFound = true;
+                }
+            }
+        }
+        System.assert(!fdaRuleFound, 'Suppressed rule should not appear in results');
+    }
+
+    // ---------------------------------------------------------------------------
+    // Rule_Override__c: Override_Message action
+    // ---------------------------------------------------------------------------
+
+    @IsTest
+    static void testOverride_CustomMessage_SubstitutesMessage() {
+        ValidationRuleEngine.cachedPermSetNames = new Set<String>{ 'Drug_Product_Admin' };
+
+        Rule_Override__c ruleOverride = new Rule_Override__c(
+            Validation_Rule_Name__c = 'Approved_Requires_FDA_Date',
+            Permission_Set_Name__c = 'Drug_Product_Admin',
+            Override_Action__c = 'Override_Message',
+            Override_Message__c = 'Custom: please enter the approval date.',
+            Is_Active__c = true
+        );
+        insert ruleOverride;
+
+        Drug_Product__c product = new Drug_Product__c(
+            Product_Name__c = 'Override Message Test',
+            Regulatory_Status__c = 'Approved'
+        );
+
+        Test.startTest();
+        Map<Integer, List<ValidationResult>> results =
+            ValidationRuleEngine.evaluate('Drug_Product__c', new List<SObject>{ product });
+        Test.stopTest();
+
+        ValidationRuleEngine.cachedPermSetNames = null;
+
+        System.assert(results.containsKey(0), 'Should have results');
+        ValidationResult vr = null;
+        for (ValidationResult r : results.get(0)) {
+            if (r.ruleName == 'Approved_Requires_FDA_Date') {
+                vr = r;
+            }
+        }
+        System.assertNotEquals(null, vr, 'Rule should still fire with Override_Message action');
+        System.assertEquals(
+            'Custom: please enter the approval date.',
+            vr.errorMessage,
+            'Should use override message instead of default'
+        );
+        System.assertEquals(true, vr.isBlockingError, 'Override_Message should still block');
+    }
+
+    // ---------------------------------------------------------------------------
+    // Rule_Override__c: Downgrade_To_Warning action
+    // ---------------------------------------------------------------------------
+
+    @IsTest
+    static void testOverride_DowngradeToWarning_NonBlocking() {
+        ValidationRuleEngine.cachedPermSetNames = new Set<String>{ 'Drug_Product_Admin' };
+
+        Rule_Override__c ruleOverride = new Rule_Override__c(
+            Validation_Rule_Name__c = 'Approved_Requires_FDA_Date',
+            Permission_Set_Name__c = 'Drug_Product_Admin',
+            Override_Action__c = 'Downgrade_To_Warning',
+            Is_Active__c = true
+        );
+        insert ruleOverride;
+
+        Drug_Product__c product = new Drug_Product__c(
+            Product_Name__c = 'Warning Test',
+            Regulatory_Status__c = 'Approved'
+        );
+
+        Test.startTest();
+        Map<Integer, List<ValidationResult>> results =
+            ValidationRuleEngine.evaluate('Drug_Product__c', new List<SObject>{ product });
+
+        // Rule appears in results but as a warning (cache still active)
+        ValidationResult vr = null;
+        if (results.containsKey(0)) {
+            for (ValidationResult r : results.get(0)) {
+                if (r.ruleName == 'Approved_Requires_FDA_Date') {
+                    vr = r;
+                }
+            }
+        }
+        System.assertNotEquals(null, vr, 'Rule should appear as a warning');
+        System.assertEquals(false, vr.isBlockingError, 'Downgraded rule should not be blocking');
+
+        // Verify save succeeds through the trigger (non-blocking).
+        // cachedPermSetNames still set to 'Drug_Product_Admin' so the trigger
+        // also sees the Downgrade_To_Warning override and skips addError.
+        Database.SaveResult sr = Database.insert(product, false);
+        Test.stopTest();
+
+        // Reset cache after test
+        ValidationRuleEngine.cachedPermSetNames = null;
+
+        System.assert(sr.isSuccess(),
+            'Insert should succeed when rule is downgraded to warning');
+    }
+
+    // ---------------------------------------------------------------------------
+    // Rule_Override__c: Expired override is ignored
+    // ---------------------------------------------------------------------------
+
+    @IsTest
+    static void testOverride_Expired_IsIgnored() {
+        ValidationRuleEngine.cachedPermSetNames = new Set<String>{ 'Drug_Product_Admin' };
+
+        Rule_Override__c ruleOverride = new Rule_Override__c(
+            Validation_Rule_Name__c = 'Approved_Requires_FDA_Date',
+            Permission_Set_Name__c = 'Drug_Product_Admin',
+            Override_Action__c = 'Suppress',
+            Is_Active__c = true,
+            Expires_On__c = Date.today().addDays(-1) // expired yesterday
+        );
+        insert ruleOverride;
+
+        Drug_Product__c product = new Drug_Product__c(
+            Product_Name__c = 'Expired Override Test',
+            Regulatory_Status__c = 'Approved'
+        );
+
+        Test.startTest();
+        Map<Integer, List<ValidationResult>> results =
+            ValidationRuleEngine.evaluate('Drug_Product__c', new List<SObject>{ product });
+        Test.stopTest();
+
+        ValidationRuleEngine.cachedPermSetNames = null;
+
+        // Expired suppress override — rule should still fire
+        System.assert(results.containsKey(0), 'Rule should fire since override is expired');
+        Boolean fdaRuleFound = false;
+        for (ValidationResult vr : results.get(0)) {
+            if (vr.ruleName == 'Approved_Requires_FDA_Date') {
+                fdaRuleFound = true;
+            }
+        }
+        System.assert(fdaRuleFound, 'Expired override should not suppress the rule');
+    }
+
+    // ---------------------------------------------------------------------------
+    // Rule_Override__c: Inactive override is ignored
+    // ---------------------------------------------------------------------------
+
+    @IsTest
+    static void testOverride_Inactive_IsIgnored() {
+        ValidationRuleEngine.cachedPermSetNames = new Set<String>{ 'Drug_Product_Admin' };
+
+        Rule_Override__c ruleOverride = new Rule_Override__c(
+            Validation_Rule_Name__c = 'Approved_Requires_FDA_Date',
+            Permission_Set_Name__c = 'Drug_Product_Admin',
+            Override_Action__c = 'Suppress',
+            Is_Active__c = false // inactive
+        );
+        insert ruleOverride;
+
+        Drug_Product__c product = new Drug_Product__c(
+            Product_Name__c = 'Inactive Override Test',
+            Regulatory_Status__c = 'Approved'
+        );
+
+        Test.startTest();
+        Map<Integer, List<ValidationResult>> results =
+            ValidationRuleEngine.evaluate('Drug_Product__c', new List<SObject>{ product });
+        Test.stopTest();
+
+        ValidationRuleEngine.cachedPermSetNames = null;
+
+        System.assert(results.containsKey(0), 'Rule should fire since override is inactive');
+        Boolean fdaRuleFound = false;
+        for (ValidationResult vr : results.get(0)) {
+            if (vr.ruleName == 'Approved_Requires_FDA_Date') {
+                fdaRuleFound = true;
+            }
+        }
+        System.assert(fdaRuleFound, 'Inactive override should not suppress the rule');
+    }
+
+    // ---------------------------------------------------------------------------
+    // Rule_Override__c: No override for user (different perm set) — baseline unchanged
+    // ---------------------------------------------------------------------------
+
+    @IsTest
+    static void testOverride_DifferentPermSet_RuleStillFires() {
+        // Override targets a different permission set than the running user has
+        ValidationRuleEngine.cachedPermSetNames = new Set<String>{ 'Drug_Product_Access' };
+
+        Rule_Override__c ruleOverride = new Rule_Override__c(
+            Validation_Rule_Name__c = 'Approved_Requires_FDA_Date',
+            Permission_Set_Name__c = 'Drug_Product_Admin', // user has Drug_Product_Access, not Admin
+            Override_Action__c = 'Suppress',
+            Is_Active__c = true
+        );
+        insert ruleOverride;
+
+        Drug_Product__c product = new Drug_Product__c(
+            Product_Name__c = 'Wrong PermSet Override Test',
+            Regulatory_Status__c = 'Approved'
+        );
+
+        Test.startTest();
+        Map<Integer, List<ValidationResult>> results =
+            ValidationRuleEngine.evaluate('Drug_Product__c', new List<SObject>{ product });
+        Test.stopTest();
+
+        ValidationRuleEngine.cachedPermSetNames = null;
+
+        // User has Drug_Product_Access perm set — override is for Drug_Product_Admin, so no effect
+        System.assert(results.containsKey(0), 'Rule should fire for user without matching perm set');
+        Boolean fdaRuleFound = false;
+        for (ValidationResult vr : results.get(0)) {
+            if (vr.ruleName == 'Approved_Requires_FDA_Date') {
+                fdaRuleFound = true;
+            }
+        }
+        System.assert(fdaRuleFound, 'Rule should fire when user does not have the override perm set');
+    }
+
+    // ---------------------------------------------------------------------------
+    // Rule_Override__c: No perm sets (empty set) — no overrides loaded
+    // ---------------------------------------------------------------------------
+
+    @IsTest
+    static void testOverride_EmptyPermSets_NoOverrides() {
+        ValidationRuleEngine.cachedPermSetNames = new Set<String>(); // no perm sets
+
+        Rule_Override__c ruleOverride = new Rule_Override__c(
+            Validation_Rule_Name__c = 'Approved_Requires_FDA_Date',
+            Permission_Set_Name__c = 'Drug_Product_Admin',
+            Override_Action__c = 'Suppress',
+            Is_Active__c = true
+        );
+        insert ruleOverride;
+
+        Drug_Product__c product = new Drug_Product__c(
+            Product_Name__c = 'No PermSet Test',
+            Regulatory_Status__c = 'Approved'
+        );
+
+        Test.startTest();
+        Map<Integer, List<ValidationResult>> results =
+            ValidationRuleEngine.evaluate('Drug_Product__c', new List<SObject>{ product });
+        Test.stopTest();
+
+        ValidationRuleEngine.cachedPermSetNames = null;
+
+        System.assert(results.containsKey(0), 'Rule should fire when user has no perm sets');
     }
 }

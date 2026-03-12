@@ -1,0 +1,372 @@
+<template>
+    <lightning-card>
+        <h2 slot="title">
+            <lightning-icon
+                icon-name="standard:medication"
+                size="small"
+                class="slds-var-m-right_x-small">
+            </lightning-icon>
+            Drug Product Workbench
+        </h2>
+
+        <!-- ── Header action buttons ─────────────────────────────────── -->
+        <div slot="actions">
+            <!-- VIEW MODE: single Edit button -->
+            <template if:false={isEditing}>
+                <lightning-button
+                    label="Edit"
+                    variant="neutral"
+                    onclick={handleEdit}
+                    disabled={isLoading}>
+                </lightning-button>
+            </template>
+
+            <!-- EDIT MODE: Fetch FDA · Cancel · Save -->
+            <template if:true={isEditing}>
+                <lightning-button
+                    label="Fetch from FDA"
+                    icon-name="utility:database"
+                    variant="neutral"
+                    onclick={handleFetchFDA}
+                    disabled={isFetching}
+                    title="Preview proposed FDA field values without saving">
+                </lightning-button>
+                <lightning-button
+                    label="Cancel"
+                    variant="neutral"
+                    onclick={handleCancel}
+                    class="slds-m-left_x-small">
+                </lightning-button>
+                <lightning-button
+                    label="Save"
+                    variant="brand"
+                    onclick={handleSave}
+                    disabled={isSaving}
+                    class="slds-m-left_x-small">
+                </lightning-button>
+            </template>
+        </div>
+
+        <!-- ── Initial load spinner ──────────────────────────────────── -->
+        <template if:true={isLoading}>
+            <div class="slds-is-relative spinner-container">
+                <lightning-spinner
+                    alternative-text="Loading record…"
+                    size="medium">
+                </lightning-spinner>
+            </div>
+        </template>
+
+        <!-- ── Busy overlay (save / FDA fetch) ───────────────────────── -->
+        <template if:true={isBusy}>
+            <div class="slds-is-relative busy-overlay">
+                <lightning-spinner
+                    alternative-text="Working…"
+                    size="small">
+                </lightning-spinner>
+            </div>
+        </template>
+
+        <!-- ── Load error ────────────────────────────────────────────── -->
+        <template if:false={isLoading}>
+            <template if:true={hasLoadError}>
+                <div class="slds-p-around_medium">
+                    <p class="slds-text-color_error">{loadErrorMessage}</p>
+                </div>
+            </template>
+
+            <!-- ── Main two-column layout ──────────────────────────── -->
+            <template if:false={hasLoadError}>
+                <div class="slds-grid slds-wrap">
+
+                    <!-- LEFT 8/12 — form or view ───────────────────── -->
+                    <div class="slds-col slds-size_8-of-12 slds-p-around_medium form-panel">
+
+                        <!-- ── VIEW MODE ────────────────────────────── -->
+                        <template if:false={isEditing}>
+                            <lightning-record-view-form
+                                record-id={recordId}
+                                object-api-name="Drug_Product__c">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-col slds-size_1-of-2 slds-p-right_small">
+                                        <lightning-output-field field-name="Product_Name__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Generic_Name__c"></lightning-output-field>
+                                        <lightning-output-field field-name="NDC_Code__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Strength__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Dosage_Form__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Drug_Classification__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Manufacturer__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Therapeutic_Area__c"></lightning-output-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-p-left_small">
+                                        <lightning-output-field field-name="Regulatory_Status__c"></lightning-output-field>
+                                        <lightning-output-field field-name="FDA_Approval_Date__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Launch_Date__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Patent_Expiration__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Orphan_Drug_Status__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Patent_Expiry_Alert__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Last_FDA_Sync__c"></lightning-output-field>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-m-top_x-small">
+                                        <lightning-output-field field-name="Active_Ingredients__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Indications__c"></lightning-output-field>
+                                        <lightning-output-field field-name="Warnings__c"></lightning-output-field>
+                                    </div>
+                                </div>
+                            </lightning-record-view-form>
+                        </template>
+
+                        <!-- ── EDIT MODE ─────────────────────────────── -->
+                        <template if:true={isEditing}>
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+
+                                <!-- Column 1: Identity + Classification -->
+                                <div class="slds-col slds-size_1-of-2">
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            label="Product Name"
+                                            value={editState.Product_Name__c}
+                                            data-field="Product_Name__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            label="Generic Name"
+                                            value={editState.Generic_Name__c}
+                                            data-field="Generic_Name__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            label="NDC Code"
+                                            value={editState.NDC_Code__c}
+                                            data-field="NDC_Code__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            label="Strength"
+                                            value={editState.Strength__c}
+                                            data-field="Strength__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-combobox
+                                            label="Dosage Form"
+                                            value={editState.Dosage_Form__c}
+                                            options={dosageFormOptions}
+                                            data-field="Dosage_Form__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-combobox
+                                            label="Drug Classification"
+                                            value={editState.Drug_Classification__c}
+                                            options={drugClassificationOptions}
+                                            data-field="Drug_Classification__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                </div>
+
+                                <!-- Column 2: Regulatory + Dates -->
+                                <div class="slds-col slds-size_1-of-2">
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            label="Manufacturer"
+                                            value={editState.Manufacturer__c}
+                                            data-field="Manufacturer__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            label="Therapeutic Area"
+                                            value={editState.Therapeutic_Area__c}
+                                            data-field="Therapeutic_Area__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-combobox
+                                            label="Regulatory Status"
+                                            value={editState.Regulatory_Status__c}
+                                            options={regulatoryStatusOptions}
+                                            data-field="Regulatory_Status__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-combobox>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            type="date"
+                                            label="FDA Approval Date"
+                                            value={editState.FDA_Approval_Date__c}
+                                            data-field="FDA_Approval_Date__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            type="date"
+                                            label="Launch Date"
+                                            value={editState.Launch_Date__c}
+                                            data-field="Launch_Date__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-input
+                                            type="date"
+                                            label="Patent Expiration"
+                                            value={editState.Patent_Expiration__c}
+                                            data-field="Patent_Expiration__c"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                </div>
+
+                                <!-- Full-width: long text + checkbox -->
+                                <div class="slds-col slds-size_1-of-1 slds-m-top_x-small">
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-textarea
+                                            label="Active Ingredients"
+                                            value={editState.Active_Ingredients__c}
+                                            data-field="Active_Ingredients__c"
+                                            max-length="4000"
+                                            onchange={handleFieldChange}>
+                                        </lightning-textarea>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-textarea
+                                            label="Indications"
+                                            value={editState.Indications__c}
+                                            data-field="Indications__c"
+                                            max-length="4000"
+                                            onchange={handleFieldChange}>
+                                        </lightning-textarea>
+                                    </div>
+                                    <div class="slds-m-bottom_x-small">
+                                        <lightning-textarea
+                                            label="Warnings"
+                                            value={editState.Warnings__c}
+                                            data-field="Warnings__c"
+                                            max-length="4000"
+                                            onchange={handleFieldChange}>
+                                        </lightning-textarea>
+                                    </div>
+                                    <div class="slds-m-bottom_small">
+                                        <lightning-input
+                                            type="checkbox"
+                                            label="Orphan Drug"
+                                            checked={editState.Orphan_Drug_Status__c}
+                                            data-field="Orphan_Drug_Status__c"
+                                            data-type="checkbox"
+                                            onchange={handleFieldChange}>
+                                        </lightning-input>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ── FDA DIFF PANEL ─────────────────────── -->
+                            <template if:true={hasFDAProposal}>
+                                <div class="fda-diff-panel slds-box slds-theme_shade slds-m-top_medium">
+                                    <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+                                        <h3 class="slds-text-heading_small">
+                                            <lightning-icon
+                                                icon-name="utility:database"
+                                                size="xx-small"
+                                                class="slds-var-m-right_xx-small">
+                                            </lightning-icon>
+                                            FDA Proposed Changes
+                                        </h3>
+                                        <p class="slds-text-body_small slds-text-color_weak">
+                                            Select fields to accept, then click Apply.
+                                        </p>
+                                    </div>
+                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-m-bottom_small">
+                                        <thead>
+                                            <tr class="slds-line-height_reset">
+                                                <th scope="col" class="slds-text-title_caps">Field</th>
+                                                <th scope="col" class="slds-text-title_caps">Current</th>
+                                                <th scope="col" class="slds-text-title_caps">Proposed</th>
+                                                <th scope="col" class="slds-text-title_caps accept-col">Accept</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={fdaProposalRows} for:item="row">
+                                                <tr key={row.field}>
+                                                    <td data-label="Field" class="field-label">{row.label}</td>
+                                                    <td data-label="Current" class="current-value">{row.current}</td>
+                                                    <td data-label="Proposed" class="proposed-value">{row.proposed}</td>
+                                                    <td data-label="Accept" class="accept-col">
+                                                        <lightning-input
+                                                            type="checkbox"
+                                                            label="Accept"
+                                                            variant="label-hidden"
+                                                            checked={row.accepted}
+                                                            data-field={row.field}
+                                                            onchange={handleFDAAcceptToggle}>
+                                                        </lightning-input>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                    <lightning-button
+                                        label="Apply Selected Changes"
+                                        variant="neutral"
+                                        onclick={handleApplyFDA}>
+                                    </lightning-button>
+                                    <lightning-button
+                                        label="Dismiss"
+                                        variant="neutral"
+                                        onclick={handleDismissFDA}
+                                        class="slds-m-left_x-small">
+                                    </lightning-button>
+                                </div>
+                            </template>
+
+                        </template>
+                        <!-- end EDIT MODE -->
+
+                    </div>
+                    <!-- end form panel -->
+
+                    <!-- RIGHT 4/12 — validation panel ──────────────── -->
+                    <div class="slds-col slds-size_4-of-12 slds-p-around_medium">
+                        <div class="validation-panel">
+                            <div class="panel-header slds-m-bottom_small">
+                                <h3 class="slds-text-heading_small">
+                                    <lightning-icon
+                                        icon-name="utility:shield"
+                                        size="xx-small"
+                                        class="slds-var-m-right_xx-small">
+                                    </lightning-icon>
+                                    Validation Status
+                                </h3>
+                            </div>
+                            <template if:true={isEditing}>
+                                <c-validation-badge-list
+                                    errors={liveValidationErrors}>
+                                </c-validation-badge-list>
+                            </template>
+                            <template if:false={isEditing}>
+                                <p class="slds-text-body_small slds-text-color_weak prompt-text">
+                                    Click <strong>Edit</strong> to enable live validation.
+                                </p>
+                            </template>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- end main grid -->
+            </template>
+        </template>
+
+    </lightning-card>
+</template>

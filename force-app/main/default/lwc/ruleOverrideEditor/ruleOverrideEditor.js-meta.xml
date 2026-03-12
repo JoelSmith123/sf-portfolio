@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <isExposed>false</isExposed>
+    <masterLabel>Rule Override Editor</masterLabel>
+    <description>CRUD editor for Rule_Override__c records. Stateful child component used inside ruleAdminConsole. Wires getAllOverrides and getPermissionSetNames independently.</description>
+</LightningComponentBundle>

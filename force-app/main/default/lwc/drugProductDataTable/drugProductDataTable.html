@@ -1,5 +1,15 @@
 <template>
     <lightning-card title="Drug Product Portfolio" icon-name="custom:custom66">
+        <!-- New Drug Product button in card header -->
+        <div slot="actions">
+            <lightning-button
+                label="New Drug Product"
+                icon-name="utility:add"
+                variant="brand"
+                onclick={handleNewRecord}>
+            </lightning-button>
+        </div>
+
         <div class="slds-var-m-around_medium">
             <lightning-input
                 type="search"
@@ -26,6 +36,7 @@
                 sorted-direction={sortedDirection}
                 onsort={handleSort}
                 onsave={handleSave}
+                onrowaction={handleRowAction}
                 draft-values={draftValues}
                 show-row-number-column
                 errors={errors}>

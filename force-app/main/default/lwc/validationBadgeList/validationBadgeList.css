@@ -1,0 +1,60 @@
+:host {
+    display: block;
+}
+
+/* ── Badge list ───────────────────────────────────────────────────────── */
+.badge-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.badge-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    border-left: 3px solid transparent;
+}
+
+/* Blocking error — red left border, light-red background */
+.badge-item_error {
+    background-color: #fef0ee;
+    border-left-color: #c23934;
+    color: #3e3e3c;
+}
+
+/* Downgraded warning — amber left border, light-yellow background */
+.badge-item_warning {
+    background-color: #fff8ed;
+    border-left-color: #f3a312;
+    color: #3e3e3c;
+}
+
+.badge-icon {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.badge-message {
+    font-weight: 500;
+    margin-right: 0.25rem;
+}
+
+.badge-field {
+    color: #706e6b;
+    white-space: nowrap;
+}
+
+/* ── All-clear state ─────────────────────────────────────────────────── */
+.badge-pass {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    color: #2e844a;
+    font-size: 0.75rem;
+    font-weight: 500;
+}

@@ -18,7 +18,13 @@ public class ValidationResult {
     @AuraEnabled public String ruleName;
 
     /**
-     * @description Constructs a failed validation result.
+     * @description When false, the failure is a UI-only warning and does not block save.
+     *              Set by the Downgrade_To_Warning Rule_Override__c action. Defaults to true.
+     */
+    @AuraEnabled public Boolean isBlockingError;
+
+    /**
+     * @description Constructs a failed validation result that blocks save.
      * @param fieldName The field that failed validation.
      * @param errorMessage The error message to display.
      */
@@ -26,6 +32,7 @@ public class ValidationResult {
         this.fieldName = fieldName;
         this.errorMessage = errorMessage;
         this.passed = false;
+        this.isBlockingError = true;
     }
 
     /**
@@ -39,5 +46,6 @@ public class ValidationResult {
         this.ruleName = ruleName;
         this.passed = passed;
         this.errorMessage = null;
+        this.isBlockingError = true;
     }
 }

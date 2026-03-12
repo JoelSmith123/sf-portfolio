@@ -1,0 +1,13 @@
+:host {
+    display: block;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+.empty-state {
+    border: 1px dashed #dddbda;
+    border-radius: 0.25rem;
+    padding: 1.5rem;
+}
+
+/* ── Action help text inside modal ──────────────────────────────── */
+/* (rendered as a plain <p> below the action combobox) */

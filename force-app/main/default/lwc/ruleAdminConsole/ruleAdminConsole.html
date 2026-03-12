@@ -1,0 +1,70 @@
+<template>
+    <!-- ── ACCESS DENIED ──────────────────────────────────────────── -->
+    <template if:false={hasPermission}>
+        <lightning-card>
+            <div class="slds-p-around_large slds-text-align_center">
+                <lightning-icon
+                    icon-name="utility:lock"
+                    size="large"
+                    variant="warning"
+                    class="slds-m-bottom_small">
+                </lightning-icon>
+                <h2 class="slds-text-heading_medium slds-m-bottom_x-small">Access Denied</h2>
+                <p class="slds-text-body_regular slds-text-color_weak">
+                    The <strong>Manage Validation Rules</strong> custom permission is required
+                    to access this console. Contact your Salesforce administrator.
+                </p>
+            </div>
+        </lightning-card>
+    </template>
+
+    <!-- ── ADMIN CONSOLE ─────────────────────────────────────────── -->
+    <template if:true={hasPermission}>
+
+        <!-- Info banner -->
+        <div class="info-banner slds-m-bottom_medium" role="status">
+            <lightning-icon
+                icon-name="utility:info"
+                size="xx-small"
+                class="slds-var-m-right_x-small banner-icon">
+            </lightning-icon>
+            <strong>Rule overrides take effect immediately</strong>
+            — no Salesforce deployment required. The Validation Rules table below is
+            metadata-controlled and read-only here; changes require a deployment.
+        </div>
+
+        <!-- Section 1: Validation Rule Metadata (read-only) -->
+        <lightning-card class="slds-m-bottom_medium">
+            <h2 slot="title">
+                <lightning-icon
+                    icon-name="utility:rules"
+                    size="small"
+                    class="slds-var-m-right_x-small">
+                </lightning-icon>
+                Validation Rules
+                <span class="slds-badge slds-badge_lightest slds-m-left_x-small badge-count">
+                    {ruleCount}
+                </span>
+            </h2>
+            <div class="slds-p-around_medium">
+                <c-rule-metadata-table rules={rules}></c-rule-metadata-table>
+            </div>
+        </lightning-card>
+
+        <!-- Section 2: Rule Overrides (editable) -->
+        <lightning-card>
+            <h2 slot="title">
+                <lightning-icon
+                    icon-name="utility:settings"
+                    size="small"
+                    class="slds-var-m-right_x-small">
+                </lightning-icon>
+                Runtime Overrides
+            </h2>
+            <div class="slds-p-around_medium">
+                <c-rule-override-editor rules={rules}></c-rule-override-editor>
+            </div>
+        </lightning-card>
+
+    </template>
+</template>

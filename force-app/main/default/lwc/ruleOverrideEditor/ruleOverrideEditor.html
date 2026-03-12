@@ -1,0 +1,181 @@
+<template>
+    <!-- ── Toolbar ────────────────────────────────────────────────── -->
+    <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+        <p class="slds-text-body_small slds-text-color_weak">
+            {overrideCount} override{overrideCountSuffix} configured
+        </p>
+        <lightning-button
+            label="New Override"
+            icon-name="utility:add"
+            variant="brand"
+            onclick={handleNewOverride}>
+        </lightning-button>
+    </div>
+
+    <!-- ── Overrides table ───────────────────────────────────────── -->
+    <template if:true={hasOverrides}>
+        <lightning-datatable
+            key-field="Id"
+            data={overrides}
+            columns={columns}
+            onrowaction={handleRowAction}
+            hide-checkbox-column>
+        </lightning-datatable>
+    </template>
+    <template if:false={hasOverrides}>
+        <div class="slds-p-around_medium slds-text-align_center empty-state">
+            <lightning-icon
+                icon-name="utility:settings"
+                size="medium"
+                class="slds-m-bottom_small">
+            </lightning-icon>
+            <p class="slds-text-body_regular slds-text-color_weak">
+                No runtime overrides configured.
+                Click <strong>New Override</strong> to suppress a rule, substitute
+                a custom error message, or downgrade a blocking error to a warning.
+            </p>
+        </div>
+    </template>
+
+    <!-- ── Create / Edit Modal ──────────────────────────────────── -->
+    <template if:true={showModal}>
+        <section
+            role="dialog"
+            tabindex="-1"
+            aria-modal="true"
+            aria-labelledby="modal-heading"
+            class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+
+                <!-- Modal header -->
+                <header class="slds-modal__header">
+                    <button
+                        class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                        title="Close"
+                        onclick={handleCloseModal}>
+                        <lightning-icon
+                            icon-name="utility:close"
+                            alternative-text="Close"
+                            size="small">
+                        </lightning-icon>
+                    </button>
+                    <h2 id="modal-heading" class="slds-text-heading_medium">
+                        {modalTitle}
+                    </h2>
+                </header>
+
+                <!-- Modal body -->
+                <div class="slds-modal__content slds-p-around_medium">
+
+                    <!-- Row 1: Rule + Permission Set -->
+                    <div class="slds-grid slds-gutters_small slds-m-bottom_small">
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-combobox
+                                label="Validation Rule"
+                                value={draftOverride.Validation_Rule_Name__c}
+                                options={ruleOptions}
+                                required
+                                data-field="Validation_Rule_Name__c"
+                                onchange={handleDraftChange}>
+                            </lightning-combobox>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-combobox
+                                label="Permission Set"
+                                value={draftOverride.Permission_Set_Name__c}
+                                options={permSetOptions}
+                                required
+                                data-field="Permission_Set_Name__c"
+                                onchange={handleDraftChange}>
+                            </lightning-combobox>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Override Action -->
+                    <div class="slds-m-bottom_small">
+                        <lightning-combobox
+                            label="Override Action"
+                            value={draftOverride.Override_Action__c}
+                            options={actionOptions}
+                            required
+                            data-field="Override_Action__c"
+                            onchange={handleDraftChange}>
+                        </lightning-combobox>
+                        <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                            {actionHelpText}
+                        </p>
+                    </div>
+
+                    <!-- Override Message (conditional) -->
+                    <template if:true={showMessageField}>
+                        <div class="slds-m-bottom_small">
+                            <lightning-input
+                                label="Override Message"
+                                value={draftOverride.Override_Message__c}
+                                placeholder="Custom error text to display instead of the rule's default"
+                                max-length="500"
+                                data-field="Override_Message__c"
+                                onchange={handleDraftChange}>
+                            </lightning-input>
+                        </div>
+                    </template>
+
+                    <!-- Row 3: Active + Expires On -->
+                    <div class="slds-grid slds-gutters_small slds-m-bottom_small">
+                        <div class="slds-col slds-size_1-of-3">
+                            <lightning-input
+                                type="checkbox"
+                                label="Active"
+                                checked={draftOverride.Is_Active__c}
+                                data-field="Is_Active__c"
+                                data-type="checkbox"
+                                onchange={handleDraftChange}>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <lightning-input
+                                type="date"
+                                label="Expires On"
+                                value={draftOverride.Expires_On__c}
+                                placeholder="Leave blank for no expiry"
+                                data-field="Expires_On__c"
+                                onchange={handleDraftChange}>
+                            </lightning-input>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <lightning-textarea
+                        label="Admin Notes"
+                        value={draftOverride.Notes__c}
+                        placeholder="Rationale for this override (internal use only)"
+                        max-length="1000"
+                        data-field="Notes__c"
+                        onchange={handleDraftChange}>
+                    </lightning-textarea>
+
+                </div>
+                <!-- end modal body -->
+
+                <!-- Modal footer -->
+                <footer class="slds-modal__footer">
+                    <lightning-button
+                        label="Cancel"
+                        variant="neutral"
+                        onclick={handleCloseModal}>
+                    </lightning-button>
+                    <lightning-button
+                        label="Save Override"
+                        variant="brand"
+                        onclick={handleSaveOverride}
+                        disabled={isSaving}
+                        class="slds-m-left_x-small">
+                    </lightning-button>
+                </footer>
+
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
+    </template>
+
+</template>

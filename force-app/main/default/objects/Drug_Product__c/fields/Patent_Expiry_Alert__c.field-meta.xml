@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Patent_Expiry_Alert__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Set to true automatically by the Drug_Product_Patent_Expiry_Flag Flow when a patent is expiring within 18 months. Used to flag records for review in the data table.</description>
+    <externalId>false</externalId>
+    <label>Patent Expiry Alert</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

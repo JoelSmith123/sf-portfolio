@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Grants full access to Drug Product records and all custom fields. Required for the Drug Products data table LWC and FDA API enrichment features.</description>
+    <description>Admin-level access to Drug Product data and the Rule Admin Console. Grants full CRUD on Rule Override records and the Manage Validation Rules custom permission required to modify rule overrides via the admin LWC.</description>
     <hasActivationRequired>false</hasActivationRequired>
-    <label>Drug Product Access</label>
+    <label>Drug Product Admin</label>
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Manage_Validation_Rules</name>
+    </customPermissions>
     <objectPermissions>
         <allowCreate>true</allowCreate>
         <allowDelete>true</allowDelete>
@@ -10,6 +14,15 @@
         <allowRead>true</allowRead>
         <modifyAllRecords>true</modifyAllRecords>
         <object>Drug_Product__c</object>
+        <viewAllRecords>true</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <object>Rule_Override__c</object>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
     <fieldPermissions>
@@ -69,6 +82,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Drug_Product__c.Patent_Expiry_Alert__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Drug_Product__c.Indications__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -89,12 +107,27 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Drug_Product__c.Patent_Expiry_Alert__c</field>
+        <field>Drug_Product__c.Last_FDA_Sync__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Drug_Product__c.Last_FDA_Sync__c</field>
+        <field>Rule_Override__c.Override_Message__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Rule_Override__c.Is_Active__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Rule_Override__c.Expires_On__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Rule_Override__c.Notes__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <tabSettings>
