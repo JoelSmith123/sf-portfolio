@@ -1,0 +1,85 @@
+:host {
+    display: block;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────── */
+.form-panel {
+    border-right: 1px solid #e5e5e5;
+    min-height: 12rem;
+}
+
+.validation-panel {
+    position: sticky;
+    top: 1rem;
+}
+
+.panel-header h3 {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #3e3e3c;
+}
+
+.prompt-text {
+    font-size: 0.8125rem;
+    color: #706e6b;
+}
+
+/* ── Spinner containers ──────────────────────────────────────────────── */
+.spinner-container {
+    min-height: 8rem;
+}
+
+.busy-overlay {
+    height: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ── FDA diff panel ──────────────────────────────────────────────────── */
+.fda-diff-panel {
+    border-left: 3px solid #0176d3;
+}
+
+.fda-diff-panel h3 {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.fda-diff-panel table th {
+    font-size: 0.75rem;
+}
+
+.fda-diff-panel table td {
+    font-size: 0.8125rem;
+    vertical-align: middle;
+}
+
+.field-label {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.current-value {
+    color: #706e6b;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.proposed-value {
+    color: #0176d3;
+    font-weight: 500;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.accept-col {
+    width: 4rem;
+    text-align: center;
+}
