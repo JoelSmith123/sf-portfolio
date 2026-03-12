@@ -48,9 +48,5 @@ $RECYCLE.BIN/
 **/.venv/
 **/venv/
 
-# Other config
-CLAUDE.md
-PLANNING.md
-
 # superfluous metadata, from retrieval
 force-app/main/default/flexipages/*_UtilityBar.flexipage-meta.xml
