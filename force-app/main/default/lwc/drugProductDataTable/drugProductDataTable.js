@@ -67,7 +67,7 @@ export default class DrugProductDataTable extends NavigationMixin(LightningEleme
     _debounceTimer;
 
     /**
-     * @description Wire handler for getDrugProductsWithValidation (cacheable=false).
+     * @description Wire handler for getDrugProductsWithValidation (cacheable=true).
      * Maps each DrugProductValidationWrapper to a flat record object suitable for
      * lightning-datatable, injecting computed validationStatusLabel and
      * validationStatusIcon properties for the Health column.

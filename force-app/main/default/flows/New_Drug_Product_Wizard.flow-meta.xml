@@ -472,7 +472,7 @@
         <locationX>50</locationX>
         <locationY>494</locationY>
         <allowBack>true</allowBack>
-        <allowFinish>false</allowFinish>
+        <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <connector>
             <targetReference>Screen_RegulatoryDetails</targetReference>
@@ -537,7 +537,7 @@
         <locationX>176</locationX>
         <locationY>614</locationY>
         <allowBack>true</allowBack>
-        <allowFinish>false</allowFinish>
+        <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <connector>
             <targetReference>Screen_Review</targetReference>
@@ -624,7 +624,7 @@
         <locationX>176</locationX>
         <locationY>734</locationY>
         <allowBack>true</allowBack>
-        <allowFinish>false</allowFinish>
+        <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <connector>
             <targetReference>Action_CreateRecord</targetReference>
