@@ -61,7 +61,7 @@ public with sharing class DrugProductController {
                        Strength__c, Dosage_Form__c, Drug_Classification__c,
                        Therapeutic_Area__c, Regulatory_Status__c, Manufacturer__c,
                        FDA_Approval_Date__c, Launch_Date__c, Patent_Expiration__c,
-                       Patent_Expiry_Alert__c, Orphan_Drug_Status__c
+                       Patent_Expiry_Alert__c, Orphan_Drug_Status__c, Warnings__c
                 FROM Drug_Product__c
                 WHERE Product_Name__c LIKE :safeTerm
                    OR Generic_Name__c LIKE :safeTerm
@@ -77,7 +77,7 @@ public with sharing class DrugProductController {
                        Strength__c, Dosage_Form__c, Drug_Classification__c,
                        Therapeutic_Area__c, Regulatory_Status__c, Manufacturer__c,
                        FDA_Approval_Date__c, Launch_Date__c, Patent_Expiration__c,
-                       Patent_Expiry_Alert__c, Orphan_Drug_Status__c
+                       Patent_Expiry_Alert__c, Orphan_Drug_Status__c, Warnings__c
                 FROM Drug_Product__c
                 ORDER BY Product_Name__c ASC
                 LIMIT 200
